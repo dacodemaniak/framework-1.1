@@ -29,9 +29,8 @@ class jsonResponse extends \wp\Http\Response\response {
 		// Assigne les contrôleurs à la vue
 		foreach($this->controllers as $controller){
 			//echo "Modèle à charger pour " . $controller->name() . " : " . $controller->getTemplate() . "<br />\n";
+			//echo "Contrôleur courant : " . $controller->name() . "<br>";
 			echo $controller->process();
 		}
 	}
-	
-	
 }
