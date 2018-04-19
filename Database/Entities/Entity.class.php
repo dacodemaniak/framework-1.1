@@ -10,10 +10,9 @@ namespace wp\Database\Entities;
 
 use \wp\Database\Entities\Columns\Column;
 use \wp\Database\Entities\Columns\Columns as Columns;
-use \wp\Database\SQL\Select as Select;
-use \wp\Database\Query\Get as Get;
+use wp\Database\Interfaces\IEntity;
 
-abstract class Entity implements Select {
+abstract class Entity implements IEntity {
 	
 	/**
 	 * Nom de la table
@@ -33,23 +32,7 @@ abstract class Entity implements Select {
 	 */
 	protected $columns;
 	
-	/**
-	 * Instance de PDOStatement
-	 * @var \PDOStatement
-	 */
-	protected $statement;
-	
-	/**
-	 * Chaîne de requête SQL
-	 * @var string
-	 */
-	protected $query;
-	
-	/**
-	 * Tableau des paramètres de requête pour les requêtes préparées
-	 * @var array
-	 */
-	protected $queryParams;
+
 	
 	/**
 	 * Définit ou retourne le nom de l'entité
@@ -92,6 +75,7 @@ abstract class Entity implements Select {
 	public function __set(string $attributeName, $value){
 		if(($column = $this->columns->findBy($attributeName)) !== false){
 			$column->value($value);
+			return true;
 		}
 		
 		$logger = new \wp\Utilities\Logger\Logger("entity");
@@ -187,94 +171,6 @@ abstract class Entity implements Select {
 	 * @return ActiveRecord
 	 */
 	abstract public function getActiveRecordInstance();
-	
-	/**
-	 * Définit une requête SELECT sur l'ensemble des colonnes de la table
-	 * {@inheritDoc}
-	 * @see \wp\Database\SQL\Select::selectAll()
-	 * @return \PDOStatement | false
-	 * @todo Ajouter un éventuel ORDER BY, GROUP BY
-	 */
-	public function selectAll(){
-		$this->query = "SELECT ";
-		
-		// Ajoute les colonnes de la table
-		$this->query .= $this->getFullQualifiedColumns();
-		
-		// Définit l'origine de la requête
-		$this->query .= " FROM " . $this->getAliasedName();
-		
-		$query = Get::get();
-		
-		$query->SQL($this->query);
-		
-		$this->statement = $query->process();
-		
-		return $this->statement;
-	}
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 * @see \wp\Database\SQL\Select::selectBy()
-	 */
-	public function selectBy(){
-		$this->query = "SELECT ";
-		
-		// Ajoute les colonnes de la table
-		$this->query .= $this->getFullQualifiedColumns();
-		
-		// Définit l'origine de la requête
-		$this->query .= " FROM " . $this->getAliasedName();
-		
-		// Ajouter la clause WHERE le cas échéant
-		$whereClause = "";
-		$queryParams = [];
-		foreach($this->columns as $column => $object){
-			if(!is_null($object->value())){
-				$whereClause .= $this->alias() . "." . $object->name() . "=:" . $object->name() . " AND "; 
-				$queryParams[$object->name()] = $object->value();
-			}
-		}
-		
-		if(strlen($whereClause)){
-			$whereClause = substr($whereClause,0, strlen($whereClause) - 5);
-			$this->query .= " WHERE " . $whereClause;
-		}
-		
-		// Instancie une requête de type SELECT
-		$query = Get::get();
-		
-		$query->SQL($this->query);
-		$query->queryParams($queryParams);
-		
-		$this->statement = $query->process();
-		
-		return $this->statement;
-	}
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 * @see \wp\Database\SQL\Select::addOrderBy()
-	 */
-	public function addOrderBy(string $column, string $direction="ASC"){
-		
-	}
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 * @see \wp\Database\SQL\Select::addGroupBy()
-	 */
-	public function addGroupBy(string $column){}
-	
-	/**
-	 *
-	 * {@inheritDoc}
-	 * @see \wp\Database\SQL\Select::addConstraint()
-	 */
-	public function addConstraint(string $column, string $operator, string $logical=null){}
 	
 	/**
 	 * Humanise l'affichage de l'objet courant

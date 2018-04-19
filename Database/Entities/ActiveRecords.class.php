@@ -9,6 +9,7 @@
 namespace wp\Database\Entities;
 
 use \wp\Database\Entities\ActiveRecord as ActiveRecord;
+use \wp\Database\Interfaces\IActiveRecord;
 
 class ActiveRecords implements \Iterator {
 	
@@ -41,31 +42,11 @@ class ActiveRecords implements \Iterator {
 	}
 	
 	/**
-	 * Alimente la collection des enregistrements actifs avec la totalité des lignes
+	 * Ajoute un item à la collection des enregistrements actifs
+	 * @param IActiveRecord $activeRecord
 	 */
-	public function findAll(){
-		if(($statement = $this->entity->selectAll()) !== false){
-			$statement->setFetchMode(\PDO::FETCH_OBJ);
-			while($data = $statement->fetch()){
-				$record = $this->entity->getActiveRecordInstance();
-				$record->hydrate($data);
-				$this->records[] = $record;
-			}
-		}
-	}
-
-	/**
-	 * Alimente la collection des enregistrements actifs avec la totalité des lignes
-	 */
-	public function findBy(){
-		if(($statement = $this->entity->selectBy()) !== false){
-			$statement->setFetchMode(\PDO::FETCH_OBJ);
-			while($data = $statement->fetch()){
-				$record = $this->entity->getActiveRecordInstance();
-				$record->hydrate($data);
-				$this->records[] = $record;
-			}
-		}
+	public function set(IActiveRecord $activeRecord){
+		$this->records[] = $activeRecord;
 	}
 	
 	/**

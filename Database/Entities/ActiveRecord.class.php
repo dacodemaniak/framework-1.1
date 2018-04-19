@@ -12,8 +12,9 @@ use \wp\Database\Entities\Entity as Entity;
 use \wp\Database\Entities\Columns\Columns as Columns;
 use \wp\Database\Entities\Columns\Column as Column;
 use \wp\Database\SQL\CRUD as CRUD;
+use \wp\Database\Interfaces\IActiveRecord;
 
-abstract class ActiveRecord implements CRUD {
+abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveRecord {
 	
 	/**
 	 * Définit l'entité de référence
