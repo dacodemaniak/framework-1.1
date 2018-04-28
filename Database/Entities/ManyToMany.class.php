@@ -3,55 +3,90 @@
 * @name ManyToMany.class.php Service de gestion de relations n,n entre Entités
 * @author IDea Factory (dev-team@ideafactory.fr) - Jan. 2018
 * @package wp\Database\Entities
-* @version 0.1.0
+* @version 0.0.1
 **/
 
 namespace wp\Database\Entities;
 
 use \wp\Database\Entities\Entity as Entity;
+use \wp\Database\Entities\Columns\Column;
+use \wp\Database\Entities\Columns\Columns as Columns;
+use \wp\Database\SQL\Select;
+use \wp\Database\Query\Get;
 
 abstract class ManyToMany extends Entity {
 	
 	/**
-	 * Entité principale pour la récupération des données
-	 * @var \Entity
+	 * Entités parentes de la relation courante
+	 * @var array
 	 */
-	protected $mainEntity;
+	protected $parentEntities = [];
 	
 	/**
-	 * Autre entité parente
-	 * @var \Entity
+	 * Ajoute les instances d'entités parentes dans la relation
+	 * @param void
+	 * @return void
 	 */
-	protected $parentEntity;
-	
-	/**
-	 * Définit et retourne l'entité principale de l'association
-	 * @param string $mainEntity
-	 * @return boolean|Entity
-	 */
-	protected function entity(string $entity = null){
-		if(!is_null($entity)){
-			if (($column = $this->columns->findByValue("parentEntity", $entity)) !== false){
-				$entityClass = $column->ns() . $entity . "Entity";
-				return new $entityClass();
+	protected function setParentEntities(){
+		$entities = $this->_parseName();
+
+		for ($i = 0; $i < count($entities); $i++){
+			if (($column = $this->columns->findByValue("parentEntity", ucfirst($entities[$i]))) !== false){
+				$entityClass = $column->ns() . "\\" . ucfirst($entities[$i]) . "Entity";
+				//$this->parentEntities[$entities[$i]] = new $entityClass();
+				$this->parentEntities[] = new $entityClass();
 			}
 		}
-		
-		return false;
 	}
 	
 	/**
-	 * Retourne l'entité parente principale
+	 * Retourne les entités parentes de l'entité courante
+	 * @return array
 	 */
-	public function getMainEntity(){
-		return $this->mainEntity;
+	public function getParentEntities(): array{
+		return $this->parentEntities;
 	}
 	
-	
-	public function getParentEntity(){
-		return $this->parentEntity;
+	/**
+	 * Override Entity::__set() Permet de définir la valeur d'un attribut d'une des entités
+	 * {@inheritDoc}
+	 * @see \wp\Database\Entities\Entity::__set()
+	 */
+	public function __set(string $attributeName, $value): bool {
+		$attributeParts = explode("_", $attributeName);
+		
+		if(count($attributeParts) == 2){
+			foreach ($this->parentEntities as $entity){
+				if($entity->name() === $attributeParts[0]){
+					return $entity->{$attributeParts[1]} = $value;
+				}
+			}
+			//return $this->parentEntities[$attributeParts[0]]->{$attributeParts[1]} = $value;
+		}
+		
+		return parent::__set($attributeName, $value);
 	}
 	
+	/**
+	 * Parse le nom de l'entité pour récupérer les noms des entités parentes
+	 * @return array
+	 */
+	private function _parseName(): array {
+		$sepPos = strpos($this->name, "to");
+		
+		$entities[] = substr($this->name, 0 , $sepPos);
+		$entities[] = substr($this->name, $sepPos + 2, strlen($this->name));
+		
+		// On en profite pour définir l'alias de l'entité
+		$alias = "";
+		for($i = 0; $i < count($entities); $i++) {
+			$alias .= substr($entities[$i], 0, 1);
+		}
+		
+		$this->alias(strtoupper($alias));
+		
+		return $entities;
+	}
 	/**
 	 * Définit une requête SELECT sur l'ensemble des colonnes de la table
 	 * {@inheritDoc}
@@ -60,67 +95,32 @@ abstract class ManyToMany extends Entity {
 	 * @todo Ajouter un éventuel ORDER BY, GROUP BY
 	 */
 	public function selectAll(){
-		$entities = $this->columns->findByType("parentEntity");
-		
 		$this->query = "SELECT ";
 		
-		if(!is_null($this->mainEntity)){
-			// Ajoute les colonnes de l'entité principale
-			$this->query .= $this->mainEntity->getFullQualifiedColumns();
-		} else {
-			// Définit le nom des colonnes à partir des entités parentes
-			foreach ($entities as $entity) {
-				$this->query .= $entity->getFullQualifiedColumns() . ",";
-			}
-			$this->query = substr($this->query, 0, strlen($this->query) - 1);
-		}
-		
+		// Ajoute les colonnes des entités concernées
+		$this->query .= $this->parentEntities[0]->getFullQualifiedColumns();
+		$this->query .= "," . $this->parentEntities[1]->getFullQualifiedColumns();
+		$this->query .= "," . $this->getFullQualifiedColumns();
 		
 		// Définit l'origine de la requête
 		$this->query .= " FROM ";
 		
-		if (!is_null($this->mainEntity)) {
-			$this->query .= $this->mainEntity->getAliasedName();
-		} else {
-			$this->query .= $entities[0]->getAliasedName();
-		}
+		// Première entité parente
+		$this->query .= $this->parentEntities[0]->getAliasedName();
 		
-		// Jointure avec l'association courante
+		// Jointure avec la table d'association
 		$this->query .= " INNER JOIN " . $this->getAliasedName();
-		
 		$this->query .= " ON ";
-
-		if (!is_null($this->mainEntity)) {
-			$this->query .= $this->mainEntity->alias() . "." . $this->mainEntity->getScheme()->findByType("isPrimary")->name();
-			
-		} else {
-			$this->query .= $entities[0]->alias() . "." . $entities[0]->getScheme()->findByType("isPrimary")->name();
-		}
+		$this->query .= $this->parentEntities[0]->alias() . "." . $this->parentEntities[0]->getPrimaryCol();
+		$this->query .= " = ";
+		$this->query .= $this->alias() . "." . $this->columns->findByValue("parentEntity", ucfirst($this->parentEntities[0]->name()))->name();
 		
-		$this->query .= " = " . $this->alias() . "." . $this->columns->findByValue("parentEntity", get_class($entities[0])->name());
-		
-		// Fin de la jointure
-		if(!is_null($this->mainEntity)){
-			$parent = null;
-			// Cherche l'autre entité
-			foreach($entities as $entity){
-				if($entity->name() != $this->mainEntity->name()){
-					$parent = $entity;
-					break;
-				}
-			}
-			$this->query .= " INNER JOIN " . $parent->getAliasedName();
-			
-			$this->query .= " ON " . $this->alias() . "." . $this->columns->findByValue("parentEntity", get_class($parent))->name();
-			$this->query .= " = " . $parent->alias() . "." . $parent->findByType("isPrimary")->name();
-			
-		} else {
-			$parent = $entities[1];
-			$this->query .= " INNER JOIN " . $parent->getAliasedName();
-			
-			$this->query .= " ON " . $this->alias() . "." . $this->columns->findByValue("parentEntity", get_class($parent))->name();
-			$this->query .= " = " . $parent->alias() . "." . $parent->findByType("isPrimary")->name();
-		}
+		// Jointure avec la seconde table parente
+		$this->query .= " INNER JOIN " . $this->parentEntities[1]->getAliasedName();
+		$this->query .= " ON ";
+		$this->query .= $this->alias() . "." . $this->columns->findByValue("parentEntity", ucfirst($this->parentEntities[1]->name()))->name();
+		$this->query .= " = ";
+		$this->query .= $this->parentEntities[1]->alias() . "." . $this->parentEntities[1]->getPrimaryCol();
 		
 		$query = Get::get();
 		
@@ -137,71 +137,32 @@ abstract class ManyToMany extends Entity {
 	 * @see \wp\Database\SQL\Select::selectBy()
 	 */
 	public function selectBy(){
-		$entities = $this->columns->findByType("parentEntity");
-		
 		$this->query = "SELECT ";
 		
-		if(!is_null($this->mainEntity)){
-			// Ajoute les colonnes de l'entité principale
-			$this->query .= $this->mainEntity->getFullQualifiedColumns();
-		} else {
-			// Définit le nom des colonnes à partir des entités parentes
-			foreach ($entities as $entity) {
-				$this->query .= $entity->getFullQualifiedColumns() . ",";
-			}
-			$this->query = substr($this->query, 0, strlen($this->query) - 1);
-		}
-		
+		// Ajoute les colonnes des entités concernées
+		$this->query .= $this->parentEntities[0]->getFullQualifiedColumns();
+		$this->query .= "," . $this->parentEntities[1]->getFullQualifiedColumns();
+		$this->query .= "," . $this->getFullQualifiedColumns();
 		
 		// Définit l'origine de la requête
 		$this->query .= " FROM ";
 		
-		if (!is_null($this->mainEntity)) {
-			$this->query .= $this->mainEntity->getAliasedName();
-		} else {
-			$this->query .= $entities[0]->getAliasedName();
-		}
+		// Première entité parente
+		$this->query .= $this->parentEntities[0]->getAliasedName();
 		
-		// Jointure avec l'association courante
+		// Jointure avec la table d'association
 		$this->query .= " INNER JOIN " . $this->getAliasedName();
-		
 		$this->query .= " ON ";
+		$this->query .= $this->parentEntities[0]->alias() . "." . $this->parentEntities[0]->getPrimaryCol();
+		$this->query .= " = ";
+		$this->query .= $this->alias() . "." . $this->columns->findByValue("parentEntity", ucfirst($this->parentEntities[0]->name()))->name();
 		
-		if (!is_null($this->mainEntity)) {
-			$this->query .= $this->mainEntity->alias() . "." . $this->mainEntity->getScheme()->findByType("isPrimary")->name();
-			
-		} else {
-			$this->query .= $entities[0]->alias() . "." . $entities[0]->getScheme()->findByType("isPrimary")->name();
-		}
-		
-		// Clé étrangère relative à l'entité parente courante
-		$this->query .= " = " . $this->alias() . "." . $entities[0]->name();
-		
-		// Fin de la jointure
-		if(!is_null($this->mainEntity)){
-			$parent = null;
-			// Cherche l'autre entité
-			foreach($entities as $entity){
-				if(strtolower($entity->parentEntity()) != strtolower($this->mainEntity->name())){
-					$parentEntityClass = $entity->ns() . $entity->parentEntity() . "Entity";
-					$parent = new $parentEntityClass();
-					break;
-				}
-			}
-			
-			$this->query .= " INNER JOIN " . $parent->getAliasedName();
-			
-			$this->query .= " ON " . $this->alias() . "." . $this->columns->findByValue("parentEntity", UCFirst($parent->name()))->name();
-			
-			$this->query .= " = " . $parent->alias() . "." . $parent->getScheme()->findByType("isPrimary")->name();
-			
-		} else {
-			$parent = $entities[1];
-			$this->query .= " INNER JOIN " . $parent->getAliasedName();
-			
-			$this->query .= " ON " . $this->alias() . "." . $this->columns->findByValue("parentEntity", get_class($parent))->name();
-			$this->query .= " = " . $parent->alias() . "." . $parent->findByType("isPrimary")->name();
-		}
+		// Jointure avec la seconde table parente
+		$this->query .= " INNER JOIN " . $this->parentEntities[1]->getAliasedName();
+		$this->query .= " ON ";
+		$this->query .= $this->alias() . "." . $this->columns->findByValue("parentEntity", ucfirst($this->parentEntities[1]->name()))->name();
+		$this->query .= " = ";
+		$this->query .= $this->parentEntities[1]->alias() . "." . $this->parentEntities[1]->getPrimaryCol();
 		
 		// Ajouter la clause WHERE le cas échéant
 		$whereClause = "";
@@ -213,13 +174,11 @@ abstract class ManyToMany extends Entity {
 			}
 		}
 		
-		foreach($entities as $entity){
-			$parentEntityClass = $entity->ns() . $entity->parentEntity() . "Entity";
-			$parent = new $parentEntityClass();
-			foreach($parent->getScheme() as $column => $object){
-				echo "Valeur pour la colonne " . $column . " => " . $object->value() . "<br>";
+		foreach($this->parentEntities as $entity){
+			foreach($entity->getScheme() as $column => $object){
+				//echo "Valeur pour la colonne " . $column . " => " . $object->value() . "<br>";
 				if(!is_null($object->value())){
-					$whereClause .= $this->alias() . "." . $object->name() . "=:" . $object->name() . " AND ";
+					$whereClause .= $entity->alias() . "." . $object->name() . "=:" . $object->name() . " AND ";
 					$queryParams[$object->name()] = $object->value();
 				}
 			}
@@ -229,8 +188,6 @@ abstract class ManyToMany extends Entity {
 			$whereClause = substr($whereClause,0, strlen($whereClause) - 5);
 			$this->query .= " WHERE " . $whereClause;
 		}
-		
-		echo $this->query . "<br>";
 		
 		// Instancie une requête de type SELECT
 		$query = Get::get();

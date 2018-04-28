@@ -58,14 +58,23 @@ class ActiveRecords implements \Iterator {
 	}
 	
 	/**
+	 * Alias pour la méthode length()
+	 * @see ActiveRecords::length()
+	 * @return number
+	 */
+	public function size() {
+		return count($this->records);
+	}
+	
+	/**
 	 * Retourne le tableau des enregistrements actifs
 	 * @return array | ActiveRecord | boolean
 	 */
 	public function get($index = null){
-		if(is_null($index)){
-			if($this->length() > 1){
+		if (is_null($index)) {
+			if ($this->length() > 1) {
 				return $this->records;
-			} elseif($this->length() == 1){
+			} elseif ($this->length() == 1){
 				return $this->records[0];
 			}
 		}

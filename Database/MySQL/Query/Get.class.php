@@ -59,13 +59,15 @@ class Get {
 	 * @return boolean|PDOStatement
 	 */
 	public function process(){
+		$rawBindingDatas = ""; // Sortie des données liées
+		
 		// Récupère l'instance de connexion à la base de données
 		$connexion = Connexion::instance();
 		
 		if(is_null($this->preparedStatement)){
 			// Prépare la requete
 			if(!$this->preparedStatement = $connexion->connexion()->prepare($this->sqlStatement)){
-				$rawBindingDatas = ""; // Sortie des données liées
+				
 				
 				$error = new error();
 				list($pdoCode, $internalCode, $msg) = $connexion->connexion()->errorInfo();
@@ -93,14 +95,13 @@ class Get {
 		if(!$this->preparedStatement->execute($this->queryParams)){
 			$error = new error();
 			list($pdoCode, $internalCode, $msg) = $connexion->connexion()->errorInfo();
-			
 			if(count($this->queryParams)){
 				foreach ($this->queryParams as $column => $value){
 					$rawBindingDatas .= "<strong>" . $column . "</strong> : <em>" . $value . "</em><br>";
 				}
 			}
 			
-			$message = "Erreur dans la préparation de la requête : " . \wp\Helpers\SQL\SqlFormatter::format($this->sqlStatement). "<br>\n";
+			$message = "Erreur d'exécution de la requête : " . \wp\Helpers\SQL\SqlFormatter::format($this->sqlStatement). "<br>\n";
 			$message .= "Données :<br>\n" . $rawBindingDatas . "<br>\n";
 			$message .= "Code : " . $pdoCode . " [" . $internalCode . "]<br>\n";
 			$message .= "Message : " . $msg . "\n";

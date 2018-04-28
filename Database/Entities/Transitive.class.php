@@ -7,12 +7,11 @@
 **/
 namespace wp\Database\Entities;
 
+use \wp\Database\Entities\Entity as Entity;
 use \wp\Database\Entities\Columns\Column;
 use \wp\Database\Entities\Columns\Columns as Columns;
-use \wp\Database\SQL\Select as Select;
-use \wp\Database\Query\Get as Get;
 
-abstract class Transitive extends Entity implements Select {
+abstract class Transitive extends Entity {
 	
 	/**
 	 * Instance de l'entité parente de la transitivité

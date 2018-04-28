@@ -234,7 +234,7 @@ class Column {
 	}
 	
 	/**
-	 * Définit l'entité parente pour la colonne concernée
+	 * Définit l'entité de référence pour la colonne concernée
 	 * @param string $parentEntity
 	 * @return \wp\Database\Entities\Columns\Column
 	 */

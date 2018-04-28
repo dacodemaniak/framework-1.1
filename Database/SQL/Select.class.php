@@ -8,6 +8,8 @@
 
 namespace wp\Database\SQL;
 
+use \wp\Database\Interfaces\IColumn;
+
 interface Select {
 	
 	/**
@@ -39,8 +41,9 @@ interface Select {
 	 * Définit la méthode pour l'ajout d'une contrainte dans la clause WHERE
 	 * @param string $column Nom de la colonne
 	 * @param string $operator Opérateur (=, LIKE, <=, >=, <>, ...)
+	 * @param string $value Valeur pour la comparaison
 	 * @param string $logical Couplage logique (AND, OR, ...)
 	 */
-	public function addConstraint(string $column, string $operator, string $logical=null);
+	public function addConstraint(\wp\Database\Interfaces\IColumn $column, string $operator, string $value, string $logical=null);
 	
 }

@@ -38,7 +38,7 @@ class Columns implements \Iterator {
 	/**
 	 * Retourne la définition d'une colonne par le nom ou l'alias de la colonne
 	 * @param string $id Nom de la colonne ou alias
-	 * @return mixed|unknown|boolean
+	 * @return Column|boolean
 	 */
 	public function findBy(string $id){
 		if(array_key_exists($id, $this->columns)){
