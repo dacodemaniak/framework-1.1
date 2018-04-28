@@ -80,10 +80,10 @@ abstract class Controller {
 	 */
 	protected function sendHeaders(){
 		// On autorise les requêtes qui viennent d'un autre domaine (Cross Domain)
-		if (!is_null($this->request->getOrigin())) {
+		if (!is_null($this->request()->getOrigin())) {
 			// Decide if the origin in $_SERVER['HTTP_ORIGIN'] is one
 			// you want to allow, and if so:
-			header("Access-Control-Allow-Origin: " . $this->request->getOrigin());
+			header("Access-Control-Allow-Origin: " . $this->request()->getOrigin());
 			header('Access-Control-Allow-Credentials: true');
 
 		} else {
@@ -94,7 +94,7 @@ abstract class Controller {
 		header('Access-Control-Max-Age: 86400');    // cache for 1 day
 		
 		// Access-Control headers are received during OPTIONS requests
-		if ($this->request->getMethod() == 'OPTIONS') {
+		if ($this->request()->getMethod() == 'OPTIONS') {
 			
 			if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
 				// may also be using PUT, PATCH, HEAD etc

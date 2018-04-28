@@ -49,6 +49,7 @@ class requestData implements \Iterator {
 		$this->postCount = 0;
 		$this->getCount = 0;
 		
+		
 		/**
 		echo "Constructeur de requestData<br />\n";
 		var_dump($_GET);
@@ -98,9 +99,9 @@ class requestData implements \Iterator {
 		if($postedData){
 			$datas = json_decode($postedData);
 			if(is_array($datas)){
+				
 				foreach($datas as $name => $data){
 					if($data != ""){
-	
 						$object = new \wp\Http\Request\httpPost();
 						$object->name($name)
 						->value($data);
@@ -109,36 +110,48 @@ class requestData implements \Iterator {
 					}
 				}
 			} else {
-				// Parser manuellement l'objet et l'ajouter... en POST
-				// @todo Récursivité pour alimenter correctement les structures JSON
-				$postedVars = [];
-				parse_str($postedData, $postedVars);
-				
-				foreach($postedVars as $data => $value){
-					if($data === "undefined"){
-						continue; // Passe au suivant
-					}
-					
-					if(!is_array($value)){
-						$object = new \wp\Http\Request\httpPost();
-						$object->name($data)
-						->value($value);
-						$this->addData($object);
-						$this->postCount++;
-					} else {
-						// La donnée sera convertie en chaîne JSON
-						$cleanDatas = [];
-						foreach ($value as $key => $value){
-							if ($key === "undefined"){
-								continue;
-							}
-							$cleanDatas[$key] = $value;
+				if (is_object($datas)) {
+					foreach($datas as $name => $data){
+						if($data != ""){
+							$object = new \wp\Http\Request\httpPost();
+							$object->name($name)
+							->value($data);
+							$this->addData($object);
+							$this->postCount++;
 						}
-						$object = new \wp\Http\Request\httpPost();
-						$object->name($data)
-						->value(json_encode($cleanDatas));
-						$this->addData($object);
-						$this->postCount++;
+					}
+				} else {
+					// Parser manuellement l'objet et l'ajouter... en POST
+					// @todo Récursivité pour alimenter correctement les structures JSON
+					$postedVars = [];
+					parse_str($postedData, $postedVars);
+					
+					foreach($postedVars as $data => $value){
+						if($data === "undefined"){
+							continue; // Passe au suivant
+						}
+						
+						if(!is_array($value)){
+							$object = new \wp\Http\Request\httpPost();
+							$object->name($data)
+							->value($value);
+							$this->addData($object);
+							$this->postCount++;
+						} else {
+							// La donnée sera convertie en chaîne JSON
+							$cleanDatas = [];
+							foreach ($value as $key => $value){
+								if ($key === "undefined"){
+									continue;
+								}
+								$cleanDatas[$key] = $value;
+							}
+							$object = new \wp\Http\Request\httpPost();
+							$object->name($data)
+							->value(json_encode($cleanDatas));
+							$this->addData($object);
+							$this->postCount++;
+						}
 					}
 				}
 			}

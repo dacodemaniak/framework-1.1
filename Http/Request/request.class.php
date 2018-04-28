@@ -295,7 +295,7 @@ class request {
 		
 		$this->accept = $_SERVER["HTTP_ACCEPT"];
 		$this->charset = isset($_SERVER["HTTP_ACCEPT_CHARSET"]) ? $_SERVER["HTTP_ACCEPT_CHARSET"] : "Inconnu";
-		$this->language = $_SERVER["HTTP_ACCEPT_LANGUAGE"];
+		$this->language = array_key_exists("HTTP_ACCEPT_LANGUAGE", $_SERVER) ? $_SERVER["HTTP_ACCEPT_LANGUAGE"] : "fr";
 		$this->encoding = $_SERVER["HTTP_ACCEPT_ENCODING"];
 		$this->connexion = array_key_exists("HTTP_CONNECTION",$_SERVER) ? $_SERVER["HTTP_CONNECTION"] : "unknown";
 		

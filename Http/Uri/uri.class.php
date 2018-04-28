@@ -119,15 +119,6 @@ class uri {
 		$logger->add("Inspecte l'URI : " . $this->uri, __FILE__, __LINE__);
 		
 		if($this->uri == "/"){
-			/*$route
-				->name("root")
-				->setNamespace($this->routes->root->namespace)
-				->setClassName($this->routes->root->class)
-				->setMethod($this->routes->root->method)
-				->renderMode($this->routes->root->rendermode)
-				->setQuery($this->query);
-			return $route;
-			*/
 			return \App\appLoader::wp()->routeByName("root");
 		}
 		
@@ -148,16 +139,19 @@ class uri {
 		$allFetched = false; // Toutes les routes ont été parcourue
 		$index = 0; // Indice pour le parcours de l'URI
 		$motif = $uriParts[0];
-		while($notFound || $allFetched){
+		while($notFound || !$allFetched){
 			$notFound = $this->_find($motif);
 			if($notFound){
 				$index++;
-				if($index < count($uriParts) - 1){
+				//echo $index . " <=> " . count($uriParts) . "<br>";
+				if($index <= count($uriParts) - 1){
 					$motif .= "/" . $uriParts[$index];
 					$logger->add("Motif en cours : " . $motif, __FILE__, __LINE__);
-					#echo "Chercher $motif dans les routes<br>";
-				} else 
+					//echo "Chercher $motif dans les routes<br>";
+				} else {
+					//echo "Tout est parcouru : " . count($uriParts) . "<br>";
 					$allFetched = true;
+				}
 			} else {
 				break;
 			}
@@ -165,7 +159,7 @@ class uri {
 		
 		#begin_debug
 		$logger->add("Contrôleur à charger : " . $motif, __FILE__, __LINE__);
-		#die("Motif : " . $motif);
+		//die("Motif : " . $motif);
 		#end_debug
 		
 		//$controller = join("/", $uriParts);
@@ -184,13 +178,6 @@ class uri {
 		
 		//if(property_exists($this->routes, $controller)){
 		if($this->routes->routeByName($controller)){
-			/*$route
-				->name($controller)
-				->setNamespace($this->routes->{$controller}->namespace)
-				->setClassName($this->routes->{$controller}->class)
-				->setMethod($this->routes->{$controller}->method)
-				->renderMode($this->routes->{$controller}->rendermode);
-			*/
 			$route = $this->routes->routeByName($controller);
 			
 			// Contrôle les paramètres définis dans le tableau des paramètres
@@ -199,10 +186,6 @@ class uri {
 			if($route->params() && count($route->params())){
 				//$params = $this->routes->{$controller}->params;
 				$params = $route->params();
-				#begin_debug
-				#var_dump($params);
-				#die();
-				#end_debug
 				
 				// Déterminer les paramètres facultatifs (* en fin de chaîne)
 				$nbFacultatifs = $this->getNbMandatoryParams($params);
@@ -319,6 +302,7 @@ class uri {
 	 */
 	private function _find($motif){
 		//return !property_exists($this->routes, $motif);
+		//echo "_find $motif dans les routes<br>\n";
 		return $this->routes->routeByName($motif) === false ? true : false;
 	}
 }
