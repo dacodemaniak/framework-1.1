@@ -13,6 +13,7 @@ use \wp\Database\Entities\Columns\Columns as Columns;
 use \wp\Database\Entities\Columns\Column as Column;
 use \wp\Database\SQL\CRUD as CRUD;
 use \wp\Database\Interfaces\IActiveRecord;
+use \wp\Database\Query\DoInsert as Insert;
 
 abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveRecord {
 	
@@ -20,7 +21,7 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 	 * Définit l'entité de référence
 	 * @var \Entity
 	 */
-	protected $scheme;
+	protected $entity;
 	
 	/**
 	 * Chaîne de requête SQL
@@ -36,6 +37,11 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 	protected function setScheme($scheme){
 		$this->scheme = $scheme;
 		
+		foreach($this->scheme as $column) {
+			$column->value(null);
+			$this->scheme->hydrate($column);
+		}
+		
 		return $this;
 	}
 	
@@ -45,8 +51,18 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 	 * @todo Mapper les éventuels objet JSON transmis
 	 */
 	public function hydrate($data){
-		foreach($this->scheme as $column => $object){
+		
+		/*foreach($this->scheme as $column => $object){
 			$this->{$object->name()} = $data->{$object->alias()};
+		}
+		*/
+		foreach ($data as $column => $value) {
+			if(!property_exists($this, $column)) {
+				// Cherche la colonne dans le schéma courant
+				if (($column = $this->entity->getScheme()->findBy($column)) !== false) {
+					$this->{$column->name()} = $value;
+				}
+			}
 		}
 	}
 	
@@ -57,11 +73,16 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 	 * @return \wp\Database\Entities\ActiveRecord
 	 */
 	public function __set(string $attributeName, $value){
+		$this->{$attributeName} = $value;
+		
+		/**
 		if(!property_exists($this, $attributeName)){
 			if(($column = $this->scheme->find($attributeName)) !== false){
 				$column->value($value);
 			}
 		}
+		**/
+		
 		return $this;
 	}
 	
@@ -72,7 +93,7 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 	 */
 	public function __get(string $attributeName){
 		if(!property_exists($this, $attributeName)){
-			if(($column = $this->scheme->find($attributeName)) !== false){
+			if(($column = $this->entity->getScheme()->find($attributeName)) !== false){
 				return $column->value();
 			} else {
 				// Il peut s'agir d'un élément de contenu de type JSON

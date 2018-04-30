@@ -36,7 +36,7 @@ class ActiveRecords implements \Iterator {
 	 * @param unknown $entity
 	 */
 	public function __construct($entity){
-		$this->records = array();
+		$this->records = [];
 		
 		$this->entity = $entity;
 	}
@@ -68,12 +68,12 @@ class ActiveRecords implements \Iterator {
 	
 	/**
 	 * Retourne le tableau des enregistrements actifs
-	 * @return array | ActiveRecord | boolean
+	 * @return ActiveRecords | ActiveRecord | boolean
 	 */
 	public function get($index = null){
 		if (is_null($index)) {
 			if ($this->length() > 1) {
-				return $this->records;
+				return $this;
 			} elseif ($this->length() == 1){
 				return $this->records[0];
 			}
@@ -86,11 +86,27 @@ class ActiveRecords implements \Iterator {
 	}
 	
 	/**
+	 * Humanise le contenu des enregistrements récupérés.
+	 * @return string
+	 */
+	public function __toString(): string {
+		$output = "Nombre d'enregistrements : " . $this->size() . "<br>\n";
+		
+		foreach($this as $record) {
+			$output .= "id : " . $record->id . "<br>\n";
+		}
+		
+		return $output;
+	}
+	
+	/**
 	 *
 	 * {@inheritDoc}
 	 * @see Iterator::current()
 	 */
 	public function current(){
+		#$record = $this->records[$this->index];
+		#echo "Ligne courante : " . $record->id . " pour index = " . $this->index . "<br>\n";
 		return $this->records[$this->index];
 	}
 	
@@ -99,7 +115,7 @@ class ActiveRecords implements \Iterator {
 	 * {@inheritDoc}
 	 * @see Iterator::next()
 	 */
-	public function next(){
+	public function next() {
 		$this->index++;
 	}
 	
