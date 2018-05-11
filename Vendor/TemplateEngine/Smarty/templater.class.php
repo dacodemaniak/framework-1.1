@@ -96,6 +96,12 @@ class templater {
 		$this->renderer->display();
 	}
 	
+	/**
+	 * Retourne un template compilé
+	 * @param string $template
+	 * @param array $datas
+	 * @return string
+	 */
 	public function capture($template,$datas){
 		if(!is_null($datas) && sizeof($datas)){
 			$this->tpl->assign($datas);

@@ -66,7 +66,8 @@ class mail extends \PHPMailer {
 		
 		if($this->debug){
 			$this->SMTPDebug = 3;
-		}		
+		}
+		
 		$this->clearAll();
 	}
 

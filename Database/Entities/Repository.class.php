@@ -53,10 +53,17 @@ class Repository {
 	 * @return \Repository
 	 */
 	public static function getRepository(IEntity $entity): Repository {
+		/*
 		if(is_null(self::$instance)){
 			self::$instance = new Repository($entity);
 		}
+		
+		// Vérifie si l'entité courante est la même que celle demandée
+		if ($entity instanceof self::$instance->entity){}
+		
 		return self:: $instance;
+		*/
+		return new Repository($entity);
 	}
 	
 	/**
@@ -101,7 +108,6 @@ class Repository {
 	 * @see \wp\Database\SQL\Select::selectBy()
 	 */
 	public function selectBy(){
-
 		$this->statement = $this->entity->selectBy();
 		
 		if ($this->statement !== false){

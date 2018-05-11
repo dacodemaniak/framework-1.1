@@ -224,10 +224,11 @@ class wp{
 				. $params->engine . "/" . $params->version . "/";
 				
 			if($params->engine == "Smarty"){
-				define("DS",DIRECTORY_SEPARATOR);
-				define("SMARTY_DIR", $enginePath . "libs" . DS);
-				define("SMARTY_SYSPLUGINS_DIR", SMARTY_DIR . "sysplugins" . DS);
-				define('SMARTY_PLUGINS_DIR', SMARTY_DIR . 'plugins' . DS);
+				if (!defined("DS")) define("DS",DIRECTORY_SEPARATOR);
+				if (!defined("SMARTY_DIR")) define("SMARTY_DIR", $enginePath . "libs" . DS);
+				if (!defined("SMARTY_SYSPLUGINS_DIR")) define("SMARTY_SYSPLUGINS_DIR", SMARTY_DIR . "sysplugins" . DS);
+				if (!defined("SMARTY_PLUGINS_DIR")) define("SMARTY_PLUGINS_DIR", SMARTY_DIR . "plugins" . DS);
+				
 				require_once(SMARTY_SYSPLUGINS_DIR . "smarty_internal_data.php");
 				
 				$this->templateEngine = \wp\Vendor\TemplateEngine\Smarty\templater::getEngine($this->pathes);
