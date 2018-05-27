@@ -4,6 +4,7 @@
 * @author IDea Factory (dev-team@ideafactory.fr) - Jan. 2018
 * @package wp\Database\Entities
 * @version 0.1.0
+* @todo Modifier méthode __get pour traiter les entités manytomany
 **/
 
 namespace wp\Database\Entities;
@@ -51,16 +52,22 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 	 * @todo Mapper les éventuels objet JSON transmis
 	 */
 	public function hydrate($data){
-		
-		/*foreach($this->scheme as $column => $object){
-			$this->{$object->name()} = $data->{$object->alias()};
-		}
-		*/
 		foreach ($data as $column => $value) {
+			// Quoi qu'il arrive, on stocke la donnée dans l'activeRecord
+			$this->{$column} = $value;
+			
 			if(!property_exists($this, $column)) {
 				// Cherche la colonne dans le schéma courant
-				if (($column = $this->entity->getScheme()->findBy($column)) !== false) {
-					$this->{$column->name()} = $value;
+				if (($sqlColumn = $this->entity->getScheme()->findBy($column)) !== false) {
+					$this->{$sqlColumn->name()} = $value;
+				} else {
+					// On regarde s'il s'agit d'une colonne de l'entité parente
+					if (property_exists($this->entity, "parentEntity")) {
+						$entity = $this->entity->getParentEntity();
+						if (($sqlColumn = $entity->getScheme()->findBy($column)) !== false) {
+							$this->{$sqlColumn->name()} = $value;
+						}
+					}
 				}
 			}
 		}
@@ -93,8 +100,15 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 	 */
 	public function __get(string $attributeName){
 		if(!property_exists($this, $attributeName)){
+			
 			if(($column = $this->entity->getScheme()->find($attributeName)) !== false){
-				return $column->value();
+				if (isset($this->{$column->name()})) {
+					return $this->{$column->name()};
+				} else {
+					return $this->{$column->alias()};
+				}
+				//return $column->value();
+			
 			} else {
 				// Il peut s'agir d'un élément de contenu de type JSON
 				$JSONObject = $this->getJSONObject();
@@ -102,9 +116,31 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 				if($JSONObject !== false){
 					return $JSONObject->{$attributeName};
 				}
+				
+				// Il peut aussi s'agir d'une colonne de l'entité parente
+				if (property_exists($this->entity, "parentEntity")) {
+					$entity = $this->entity->getParentEntity();
+					if(($column = $entity->getScheme()->findBy($attributeName)) !== false){
+						if (isset($this->{$column->name()})) {
+							return $this->{$column->name()};
+						} else {
+							return $this->{$column->alias()};
+						}
+						//return $column->value();
+					}
+				}
 			}
 		}
 		return $this;
+	}
+	
+	/**
+	 * Surcharge de la méthode isset pour récupérer l'état d'existence d'un attribut
+	 * @param string $attribute
+	 * @return bool
+	 */
+	public function __isset(string $attribute): bool {
+		return isset($this->{$attribute});
 	}
 	
 	/**

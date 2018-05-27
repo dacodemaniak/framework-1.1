@@ -63,6 +63,10 @@ class Helper {
 		"/", "|", "?", "*", ".", ":", "+", "-", "_", ")", "("
 	);
 	
+	private static $specialChars = array(
+		"_" => ""
+	);
+	
 	/**
 	 * Retourne une chaîne "nettoyée" des caractères non autorisés
 	 * @param string $string
@@ -70,6 +74,15 @@ class Helper {
 	 */
 	public static function replaceChars($string){
 		return strtr($string,self::$replacements);
+	}
+	
+	/**
+	 * Retourne une chaîne sans les caractères spéciaux inutiles
+	 * @param unknown $string
+	 * @return string
+	 */
+	public static function escapeSpecialChars($string) {
+		return strtr($string,self::$specialChars);
 	}
 	
 	public static function escapeTabsAndCRLF(string $string){

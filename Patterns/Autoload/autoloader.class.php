@@ -38,6 +38,7 @@ class autoloader {
 	 * @param string $class Nom complet de la classe à charger
 	 */
 	public static function autoload($className){
+		//echo "Charge la classe : " . $className . "<br>\n";
 		
 		$logger = new Logger("autoload");
 		$logger->add($className, __FILE__, __LINE__);
