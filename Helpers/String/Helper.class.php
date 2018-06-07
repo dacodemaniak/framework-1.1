@@ -102,6 +102,24 @@ class Helper {
 	}
 	
 	/**
+	 * Convertit une chaîne avec un underline en chaîne camelCase
+	 * @param string $underlineString
+	 * @return string
+	 */
+	public static function toCamelCase(string $underlineString): string {
+		$underlineString = strtolower($underlineString);
+		
+		if (strpos($underlineString, "_") !== false) {
+			$parts = explode("_", $underlineString);
+			for ($i = 1; $i < count($parts); $i++) {
+				$parts[$i] = ucfirst($parts[$i]);
+			}
+			return implode("", $parts);
+		}
+		return $underlineString;
+	}
+	
+	/**
 	 * Retourne une chaîne convertie en minuscule
 	 * @param string $string
 	 * @return string

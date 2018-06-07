@@ -123,6 +123,21 @@ class Repository {
 		return false;
 	}
 	
+	public function selectLast() {
+		$this->statement = $this->entity->selectLast();
+		
+		if ($this->statement !== false) {
+			$this->statement->setFetchMode(\PDO::FETCH_OBJ);
+			while ($data = $this->statement->fetch()) {
+				$record = $this->entity->getActiveRecordInstance();
+				$record->hydrate($data);
+				$this->activeRecords->set($record);
+			}
+			return true;
+		}
+		return false;
+	}
+	
 	/**
 	 * Retourne une collection ou une instance active de ligne
 	 * @param mixed $index

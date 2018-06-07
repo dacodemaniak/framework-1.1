@@ -264,6 +264,28 @@ abstract class Entity implements IEntity, Select {
 		return $this->statement;
 	}
 	
+	/**
+	 * Récupère le dernier élément inséré
+	 * @return \PDOStatement
+	 */
+	public function selectLast(): \PDOStatement {
+		$this->query = "SELECT " . $this->getPrimaryCol();
+		
+		// Définit l'origine de la requête
+		$this->query .= " FROM " . $this->getAliasedName();
+		
+		$this->query .= " ORDER BY " . $this->getPrimaryCol() . " DESC LIMIT 0,1;";
+		
+		// Instancie une requête de type SELECT
+		$query = Get::get();
+		
+		$query->SQL($this->query);
+		
+		$this->statement = $query->process();
+		
+		return $this->statement;
+	}
+	
 	public function selectBy() {
 		$this->query = "SELECT ";
 		
