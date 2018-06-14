@@ -64,12 +64,11 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 		
 		// Boucle sur le schéma à l'exception de la clé primaire
 		foreach($this->entity->getScheme() as $column => $definition){
-			//if($definition->primary()){
-			//	continue;
-			//}
-			$this->query .= $definition->name() . ",";
-			// Alimente le mapper de données
-			$dataMapper[":" . $definition->name()] = $this->{$definition->name()};
+			if(!($definition->primary() && $definition->auto())) {
+				$this->query .= $definition->name() . ",";
+				// Alimente le mapper de données
+				$dataMapper[":" . $definition->name()] = $this->{$definition->name()};
+			}
 		}
 		// Supprime la dernière virgule inutile
 		$this->query = substr($this->query, 0, strlen($this->query) - 1);
@@ -77,10 +76,9 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 		
 		// Boucle sur le schéma à l'exception de la clé primaire
 		foreach($this->entity->getScheme() as $column => $definition){
-			//if($definition->primary()){
-			//	continue;
-			//}
-			$this->query .= ":" . $definition->name() . ",";
+			if(!($definition->primary() && $definition->auto())) {
+				$this->query .= ":" . $definition->name() . ",";
+			}
 		}
 		// Supprime la dernière virgule inutile
 		$this->query = substr($this->query, 0, strlen($this->query) - 1);
