@@ -52,6 +52,8 @@ abstract class Controller {
 		if(is_null($this->requestData)){
 			$this->requestData = $this->request->getRoute()->getQuery();
 		}
+		
+		
 		return $this->requestData;
 	}
 	

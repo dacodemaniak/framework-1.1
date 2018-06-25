@@ -69,7 +69,6 @@ abstract class ManyToOne extends Entity implements Select {
 		$this->query .= " ON " . $this->parentEntity->alias() . "." . $this->parentEntity->getPrimaryCol();
 		$this->query .= " = " . $this->alias() . "." . $this->columns->findByType("parentEntity")->name();
 		
-		
 		$query = Get::get();
 		
 		$query->SQL($this->query);
