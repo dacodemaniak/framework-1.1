@@ -169,8 +169,8 @@ abstract class ManyToMany extends Entity {
 		$queryParams = [];
 		foreach($this->columns as $column => $object){
 			if(!is_null($object->value())){
-				$whereClause .= $this->alias() . "." . $object->name() . "=:" . $object->name() . " AND ";
-				$queryParams[$object->name()] = $object->value();
+				$whereClause .= $this->alias() . "." . $object->name() . "=:" . $this->alias().$object->name() . " AND ";
+				$queryParams[$this->alias().$object->name()] = $object->value();
 			}
 		}
 		
@@ -178,8 +178,8 @@ abstract class ManyToMany extends Entity {
 			foreach($entity->getScheme() as $column => $object){
 				//echo "Valeur pour la colonne " . $column . " => " . $object->value() . "<br>";
 				if(!is_null($object->value())){
-					$whereClause .= $entity->alias() . "." . $object->name() . "=:" . $object->name() . " AND ";
-					$queryParams[$object->name()] = $object->value();
+					$whereClause .= $entity->alias() . "." . $object->name() . "=:" . $entity->alias() . $object->name() . " AND ";
+					$queryParams[$entity->alias().$object->name()] = $object->value();
 				}
 			}
 		}

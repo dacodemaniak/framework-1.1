@@ -29,10 +29,16 @@ abstract class ManyToOne extends Entity implements Select {
 	public function __set(string $attributeName, $value): bool {
 		$attributeParts = explode("_", $attributeName);
 		
-		if(count($attributeParts) == 2){
+		if(count($attributeParts) >= 2){
 			// Traite l'entité parente
 			if ($this->parentEntity->name() === $attributeParts[0]) {
-				return $this->parentEntity->{$attributeParts[1]} = $value;
+				if (count($attributeParts) === 2) {
+					return $this->parentEntity->{$attributeParts[1]} = $value;
+				} else {
+					array_shift($attributeParts);
+					$column = join("_", $attributeParts);
+					return $this->parentEntity->{$column} = $value;
+				}
 			}
 		}
 		
@@ -62,7 +68,6 @@ abstract class ManyToOne extends Entity implements Select {
 		$this->query .= " INNER JOIN " . $this->getAliasedName();
 		$this->query .= " ON " . $this->parentEntity->alias() . "." . $this->parentEntity->getPrimaryCol();
 		$this->query .= " = " . $this->alias() . "." . $this->columns->findByType("parentEntity")->name();
-		
 		
 		$query = Get::get();
 		
@@ -127,6 +132,12 @@ abstract class ManyToOne extends Entity implements Select {
 		
 		return $this->statement;
 	}
+	
+	
+	public function selectLast():\PDOStatement {
+		return parent::selectLast();
+	}
+	
 	/**
 	 * Ajoute les instances d'entités parentes dans la relation
 	 * @param void

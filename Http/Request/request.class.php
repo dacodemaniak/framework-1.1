@@ -293,14 +293,17 @@ class request {
 		
 		$this->beginTime = $beginTime->format("d-m-Y H:i:s.u");
 		
-		$this->accept = $_SERVER["HTTP_ACCEPT"];
+		if (array_key_exists("HTTP_ACCEPT", $_SERVER)) {
+			$this->accept = $_SERVER["HTTP_ACCEPT"];
+		}
+		
 		$this->charset = isset($_SERVER["HTTP_ACCEPT_CHARSET"]) ? $_SERVER["HTTP_ACCEPT_CHARSET"] : "Inconnu";
 		$this->language = array_key_exists("HTTP_ACCEPT_LANGUAGE", $_SERVER) ? $_SERVER["HTTP_ACCEPT_LANGUAGE"] : "fr";
-		$this->encoding = $_SERVER["HTTP_ACCEPT_ENCODING"];
+		$this->encoding = array_key_exists("HTTP_ACCEPT_ENCODING", $_SERVER) ? $_SERVER["HTTP_ACCEPT_ENCODING"] : "utf8";
 		$this->connexion = array_key_exists("HTTP_CONNECTION",$_SERVER) ? $_SERVER["HTTP_CONNECTION"] : "unknown";
 		
 		$this->host = $_SERVER["HTTP_HOST"];
-		$this->referrer = $_SERVER["HTTP_USER_AGENT"];
+		$this->referrer = array_key_exists("USER_AGENT", $_SERVER) ? $_SERVER["HTTP_USER_AGENT"] : "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Mobile Safari/537.36";
 		$this->https = isset($_SERVER["HTTPS"]) ? true : false;
 		$this->serverName = $_SERVER["SERVER_NAME"];
 		

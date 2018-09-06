@@ -61,6 +61,12 @@ abstract class Entity implements IEntity, Select {
 	protected $constraints = [];
 	
 	/**
+	 * Stocke les ordres de tri
+	 * @var array
+	 */
+	protected $orders = [];
+	
+	/**
 	 * Définit ou retourne le nom de l'entité
 	 * @param string $name
 	 * @return string | \Entity
@@ -255,6 +261,36 @@ abstract class Entity implements IEntity, Select {
 			// Ajoute un where dans la requête
 		}
 		
+		if (count($this->orders)) {
+			$this->query .= " ORDER BY ";
+			foreach ($this->orders as $column => $direction) {
+				$this->query .= $column . " " . $direction . ",";
+			}
+			$this->query = substr($this->query, 0, strlen($this->query) -1);
+		}
+		
+		$query = Get::get();
+		
+		$query->SQL($this->query);
+		
+		$this->statement = $query->process();
+		
+		return $this->statement;
+	}
+	
+	/**
+	 * Récupère le dernier élément inséré
+	 * @return \PDOStatement
+	 */
+	public function selectLast(): \PDOStatement {
+		$this->query = "SELECT " . $this->getPrimaryCol();
+		
+		// Définit l'origine de la requête
+		$this->query .= " FROM " . $this->getAliasedName();
+		
+		$this->query .= " ORDER BY " . $this->getPrimaryCol() . " DESC LIMIT 0,1;";
+		
+		// Instancie une requête de type SELECT
 		$query = Get::get();
 		
 		$query->SQL($this->query);
@@ -308,7 +344,11 @@ abstract class Entity implements IEntity, Select {
 	 * {@inheritDoc}
 	 * @see \wp\Database\SQL\Select::addOrderBy()
 	 */
-	public function addOrderBy(string $column, string $direction="ASC"){}
+	public function addOrderBy(string $column, string $direction="ASC"){
+		if (!array_key_exists($column, $this->orders)) {
+			$this->orders[$column] = $direction;
+		}
+	}
 	
 	/**
 	 *

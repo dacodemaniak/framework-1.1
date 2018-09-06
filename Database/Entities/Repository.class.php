@@ -78,6 +78,10 @@ class Repository {
 	
 	public function hydrate() {}
 	
+	public function addOrderBy($column, $direction="ASC") {
+		$this->entity->addOrderBy($column, $direction);
+	}
+	
 	/**
 	 * Définit une requête SELECT sur l'ensemble des colonnes de la table
 	 * {@inheritDoc}
@@ -120,6 +124,21 @@ class Repository {
 			return true;
 		}
 		
+		return false;
+	}
+	
+	public function selectLast() {
+		$this->statement = $this->entity->selectLast();
+		
+		if ($this->statement !== false) {
+			$this->statement->setFetchMode(\PDO::FETCH_OBJ);
+			while ($data = $this->statement->fetch()) {
+				$record = $this->entity->getActiveRecordInstance();
+				$record->hydrate($data);
+				$this->activeRecords->set($record);
+			}
+			return true;
+		}
 		return false;
 	}
 	

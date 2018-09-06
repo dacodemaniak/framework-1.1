@@ -14,7 +14,7 @@ interface CRUD {
 	 * @param void
 	 * @return boolean
 	 */
-	public function delete();
+	public function delete(string $primaryCol);
 	
 	/**
 	 * Dispatche vers les méthodes insert() ou update()

@@ -7,15 +7,19 @@
 **/
 namespace wp\Utilities\Mailer;
 
-require_once(\App\appLoader::wp()->getPathes()->getRootPath("wp") . "Vendor/PHPMailer/class.phpmailer.php");
-require_once(\App\appLoader::wp()->getPathes()->getRootPath("wp") . "Vendor/PHPMailer/class.phpmaileroauth.php");
-require_once(\App\appLoader::wp()->getPathes()->getRootPath("wp") . "Vendor/PHPMailer/class.phpmaileroauthgoogle.php");
-require_once(\App\appLoader::wp()->getPathes()->getRootPath("wp") . "Vendor/PHPMailer/class.pop3.php");
-require_once(\App\appLoader::wp()->getPathes()->getRootPath("wp") . "Vendor/PHPMailer/class.smtp.php");
+require_once(join(DIRECTORY_SEPARATOR, [__DIR__, "..", "..","vendor","autoload.php"]));
 
-use \PHPMailer;
+/*
+require_once(\App\appLoader::wp()->getPathes()->getRootPath("wp") . "Vendor/PHPMailer/PHPMailer.php");
+require_once(\App\appLoader::wp()->getPathes()->getRootPath("wp") . "Vendor/PHPMailer/OAuth.php");
+require_once(\App\appLoader::wp()->getPathes()->getRootPath("wp") . "Vendor/PHPMailer/POP3.php");
+require_once(\App\appLoader::wp()->getPathes()->getRootPath("wp") . "Vendor/PHPMailer/SMTP.php");
+*/
 
-class mail extends \PHPMailer {
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\OAuth;
+
+class mail extends PHPMailer {
 
 	/**
 	 * Définit les paramètres de l'émetteur par défaut
@@ -47,7 +51,7 @@ class mail extends \PHPMailer {
 	 * @param boolean $debug Vrai si le traitement doit être debugué
 	 */
 	public function __construct($debug=false){
-		parent::__construct(true);
+		parent::__construct();
 		$this->isSMTP();
 		$this->Host = "localhost";
 		$this->Port = 25;
@@ -60,12 +64,12 @@ class mail extends \PHPMailer {
 		
 		
 		$this->debug = $debug;
-		$this->SMTPDebug = 2;
+		$this->SMTPDebug = 0;
 		
 		$this->setLanguage("fr", "language");
 		
 		if($this->debug){
-			$this->SMTPDebug = 3;
+			$this->SMTPDebug = 0;
 		}
 		
 		$this->clearAll();

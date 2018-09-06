@@ -31,6 +31,12 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 	protected $query;
 	
 	/**
+	 * Requête préparée
+	 * \PDOStatement
+	 */
+	protected $statement;
+	
+	/**
 	 * Définit le schéma de la table
 	 * @param \Columns $scheme
 	 * @return \wp\Database\Entities\ActiveRecord
@@ -47,6 +53,111 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 	}
 	
 	/**
+	 * Insertion des données dans la base
+	 * {@inheritDoc}
+	 * @see \wp\Database\SQL\CRUD::insert()
+	 */
+	public function insert() {
+		$dataMapper = [];
+		
+		$this->query = "INSERT INTO " . $this->entity->getName() . " (";
+		
+		// Boucle sur le schéma à l'exception de la clé primaire
+		foreach($this->entity->getScheme() as $column => $definition){
+			if(!($definition->primary() && $definition->auto())) {
+				$this->query .= $definition->name() . ",";
+				// Alimente le mapper de données
+				$dataMapper[":" . $definition->name()] = $this->{$definition->name()};
+			}
+		}
+		// Supprime la dernière virgule inutile
+		$this->query = substr($this->query, 0, strlen($this->query) - 1);
+		$this->query .= ") VALUES (";
+		
+		// Boucle sur le schéma à l'exception de la clé primaire
+		foreach($this->entity->getScheme() as $column => $definition){
+			if(!($definition->primary() && $definition->auto())) {
+				$this->query .= ":" . $definition->name() . ",";
+			}
+		}
+		// Supprime la dernière virgule inutile
+		$this->query = substr($this->query, 0, strlen($this->query) - 1);
+		$this->query .= ");";
+		
+		$query = \wp\Database\Query\DoInsert::get();
+		
+		$query->SQL($this->query);
+		
+		$query->queryParams($dataMapper);
+		
+		$this->statement = $query->process();
+		
+		return $this->statement;
+	}
+
+	/**
+	 * Crée et exécute une requête UPDATE pour l'enregistrement actif courant
+	 * @param string $primaryCol Nom de la clé primaire de la table
+	 * @return boolean
+	 */
+	public function update(string $primaryCol){
+		$dataMapper = [];
+		
+		$this->query = "UPDATE " . $this->entity->getName() . " SET ";
+		
+		// Boucle sur le schéma à l'exception de la clé primaire
+		foreach($this->entity->getScheme() as $column => $definition){
+			if($definition->primary()){
+				continue;
+			}
+			$this->query .= $definition->name() . " = :" . $definition->name() . ",";
+			// Alimente le mapper de données
+			$dataMapper[":" . $definition->name()] = $this->{$definition->name()};
+		}
+		// Supprime la dernière virgule inutile
+		$this->query = substr($this->query, 0, strlen($this->query) - 1);
+		
+		// Ajoute la contrainte
+		$this->query .= " WHERE " . $primaryCol . " = :" . $primaryCol . ";";
+		$dataMapper[":" . $primaryCol] = $this->{$primaryCol};
+		
+		$query = \wp\Database\Query\DoUpdate::get();
+		
+		$query->SQL($this->query);
+		
+		$query->queryParams($dataMapper);
+		
+		$this->statement = $query->process();
+		
+		return $this->statement;
+	}
+	
+	/**
+	 * Exécute une requête de suppression dans la base de données
+	 * {@inheritDoc}
+	 * @see \wp\Database\SQL\CRUD::delete()
+	 */
+	public function delete(string $primaryCol) {
+		$dataMapper = [];
+		
+		$this->query = "DELETE FROM " . $this->entity->getName();
+		
+		// Ajoute la contrainte
+		$this->query .= " WHERE " . $primaryCol . " = :" . $primaryCol . ";";
+		$dataMapper[":" . $primaryCol] = $this->{$primaryCol};
+		
+		$query = \wp\Database\Query\DoDelete::get();
+		
+		$query->SQL($this->query);
+		
+		$query->queryParams($dataMapper);
+		
+		$this->statement = $query->process();
+		
+		return $this->statement;
+	}
+	
+	/**
 	 * Alimente les attributs de l'objet ActiveRecord courant
 	 * @param row $data Ligne de données
 	 * @todo Mapper les éventuels objet JSON transmis
@@ -56,7 +167,7 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 			// Quoi qu'il arrive, on stocke la donnée dans l'activeRecord
 			$this->{$column} = $value;
 			
-			if(!property_exists($this, $column)) {
+			if(!property_exists($this->entity, $column)) {
 				// Cherche la colonne dans le schéma courant
 				if (($sqlColumn = $this->entity->getScheme()->findBy($column)) !== false) {
 					$this->{$sqlColumn->name()} = $value;
@@ -99,6 +210,7 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 	 * @return mixed|\wp\Database\Entities\ActiveRecord
 	 */
 	public function __get(string $attributeName){
+		
 		if(!property_exists($this, $attributeName)){
 			
 			if(($column = $this->entity->getScheme()->find($attributeName)) !== false){
@@ -131,7 +243,9 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 				}
 			}
 		}
-		return $this;
+		
+		//return $this;
+		return null;
 	}
 	
 	/**

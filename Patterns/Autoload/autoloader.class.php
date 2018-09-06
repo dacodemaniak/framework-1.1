@@ -71,7 +71,7 @@ class autoloader {
 		
 		$fullClassPath = $fullPath . $className;
 		
-		//echo "Cherche le fichier : " . $fullClassPath . "\n";
+		//echo "Cherche " . $fullClassPath . " [" . $fullPath . "]<br>\n";
 		
 		if(file_exists($fullPath . $className . ".class.php")){
 			require_once($fullPath . $className . ".class.php");
@@ -87,10 +87,29 @@ class autoloader {
 				}
 			} else {
 				if(file_exists($fullPath . $className . ".php")){
-					require_once($fullPath . $className . ".php");
+					$status = require_once($fullPath . $className . ".php");
+					
+					if($status) {
+						return true;
+					}
+					
 					$reflectionClass = new \ReflectionClass($saveClassName);
+					
 					if(class_exists($className) || $reflectionClass->isInterface()){
 						return true;
+					} else {
+						// Potentiellement un trait
+						return true;
+					}
+				} else {
+					// Il s'agit éventuellement d'un Trait
+					//echo "Cherche le Trait : " . $fullClassPath . "\n";
+					if(file_exists($fullPath . ".php")){
+						require_once($fullPath . ".php");
+						$reflectionClass = new \ReflectionClass($saveClassName);
+						if(trait_exists($className) || $reflectionClass->isInterface()){
+							return true;
+						}
 					}
 				}
 			}
