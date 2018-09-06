@@ -133,6 +133,31 @@ abstract class ActiveRecord implements CRUD, \wp\Database\Interfaces\IActiveReco
 	}
 	
 	/**
+	 * Exécute une requête de suppression dans la base de données
+	 * {@inheritDoc}
+	 * @see \wp\Database\SQL\CRUD::delete()
+	 */
+	public function delete(string $primaryCol) {
+		$dataMapper = [];
+		
+		$this->query = "DELETE FROM " . $this->entity->getName();
+		
+		// Ajoute la contrainte
+		$this->query .= " WHERE " . $primaryCol . " = :" . $primaryCol . ";";
+		$dataMapper[":" . $primaryCol] = $this->{$primaryCol};
+		
+		$query = \wp\Database\Query\DoDelete::get();
+		
+		$query->SQL($this->query);
+		
+		$query->queryParams($dataMapper);
+		
+		$this->statement = $query->process();
+		
+		return $this->statement;
+	}
+	
+	/**
 	 * Alimente les attributs de l'objet ActiveRecord courant
 	 * @param row $data Ligne de données
 	 * @todo Mapper les éventuels objet JSON transmis

@@ -78,6 +78,10 @@ class Repository {
 	
 	public function hydrate() {}
 	
+	public function addOrderBy($column, $direction="ASC") {
+		$this->entity->addOrderBy($column, $direction);
+	}
+	
 	/**
 	 * Définit une requête SELECT sur l'ensemble des colonnes de la table
 	 * {@inheritDoc}

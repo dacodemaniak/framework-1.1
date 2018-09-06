@@ -7,7 +7,7 @@
 **/
 namespace wp\Database\Query;
 
-abstract class Delete {
+abstract class DoDelete {
 	
 	/**
 	 * Retourne une instance de récupération de données d'une base de données
